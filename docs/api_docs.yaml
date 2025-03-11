@@ -1,0 +1,118 @@
+openapi: 3.0.0
+info:
+  title: Spins Trainer API
+  description: API para el entrenamiento de poker preflop en Spins
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Servidor local
+paths:
+  /login:
+    post:
+      summary: Iniciar sesión y obtener un token JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Inicio de sesión exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Credenciales incorrectas
+  /users:
+    get:
+      summary: Obtener lista de usuarios (requiere autenticación)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios obtenida correctamente
+        '401':
+          description: No autorizado
+    post:
+      summary: Crear un nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+  /preflop-tables:
+    get:
+      summary: Obtener todas las tablas preflop
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de tablas preflop obtenida correctamente
+    post:
+      summary: Crear una nueva tabla preflop
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hero_position:
+                  type: integer
+                villain_position:
+                  type: integer
+                level:
+                  type: integer
+                variation:
+                  type: string
+                range_data:
+                  type: string
+      responses:
+        '201':
+          description: Tabla preflop creada exitosamente
+  /training-sessions:
+    get:
+      summary: Obtener sesiones de entrenamiento
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de sesiones de entrenamiento obtenida correctamente
+  /scenarios:
+    get:
+      summary: Obtener escenarios de entrenamiento
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de escenarios obtenida correctamente
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

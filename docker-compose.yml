@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  spins_trainer:
+    container_name: spins_trainer
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.production
+    depends_on:
+      - postgres_db
+    restart: always
+
+  postgres_db:
+    image: postgres:14
+    container_name: postgres_spins_trainer
+    restart: always
+    environment:
+      POSTGRES_USER: spins_admin
+      POSTGRES_PASSWORD: strongpassword
+      POSTGRES_DB: spins_trainer_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
