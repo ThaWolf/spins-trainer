@@ -7,6 +7,7 @@ const trainingRoutes = require('./routes/training_sessions');
 const scenarioRoutes = require('./routes/scenarios');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const deckRoutes = require('./routes/deck');
 
 // Load environment variables
 dotenv.config();
@@ -36,6 +37,7 @@ app.use('/users', userRoutes);
 app.use('/preflop-tables', preflopRoutes);
 app.use('/training-sessions', trainingRoutes);
 app.use('/scenarios', scenarioRoutes);
+app.use('/deck', deckRoutes);
 
 // Start server
 const PORT = process.env.PORT || 8080;

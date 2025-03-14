@@ -21,7 +21,7 @@ services:
       POSTGRES_PASSWORD: strongpassword
       POSTGRES_DB: spins_trainer_db
     ports:
-      - "5432:5432"
+      - "5434:5434"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
