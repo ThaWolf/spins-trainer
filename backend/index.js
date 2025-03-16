@@ -3,11 +3,11 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const userRoutes = require('./routes/users');
 const preflopRoutes = require('./routes/preflop_tables');
-const trainingRoutes = require('./routes/training_sessions');
-const scenarioRoutes = require('./routes/scenarios');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const deckRoutes = require('./routes/deck');
+const validateApiKey = require('./middleware/validateApiKey');
+const enumsRoutes = require('./routes/enums');
 
 // Load environment variables
 dotenv.config();
@@ -32,12 +32,14 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// Apply API Key validation globally
+app.use(validateApiKey);
+
 // Routes
 app.use('/users', userRoutes);
-app.use('/preflop-tables', preflopRoutes);
-app.use('/training-sessions', trainingRoutes);
-app.use('/scenarios', scenarioRoutes);
+app.use('/preflop-table', preflopRoutes);
 app.use('/deck', deckRoutes);
+app.use('/enums', enumsRoutes);
 
 // Start server
 const PORT = process.env.PORT || 8080;

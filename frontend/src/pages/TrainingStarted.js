@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ACTIONS = ["CALL", "BET", "ALL_IN", "FOLD"];
-const VILLAIN_ACTIONS_FIRST = ["BET", "ALL_IN"];
-const VILLAIN_ACTIONS_SECOND = ["NONE", "BET", "ALL_IN"];
 
 export default function TrainingStarted() {
   const [username, setUsername] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('');
   const [preflopTable, setPreflopTable] = useState(null);
-  const [villainAction, setVillainAction] = useState('');
+  const [villainAction, setVillainAction] = useState('NONE');
   const [heroHand, setHeroHand] = useState(null);
   const [expectedAction, setExpectedAction] = useState(null);
   const [score, setScore] = useState(0);
@@ -30,11 +28,6 @@ export default function TrainingStarted() {
       .then(response => response.json())
       .then(data => {
         setPreflopTable(data);
-        const villainGoesFirst = data.villainGoesFirst;
-        const chosenVillainAction = villainGoesFirst ? 
-          VILLAIN_ACTIONS_FIRST[Math.floor(Math.random() * VILLAIN_ACTIONS_FIRST.length)] : 
-          VILLAIN_ACTIONS_SECOND[Math.floor(Math.random() * VILLAIN_ACTIONS_SECOND.length)];
-        setVillainAction(chosenVillainAction);
 
         // Fetch hero hand
         fetch('http://localhost:8080/deck/deal-hand', {
@@ -44,16 +37,19 @@ export default function TrainingStarted() {
           .then(hand => {
             setHeroHand(hand);
             // Fetch expected action
-            fetch('http://localhost:8080/expected-action', {
+            fetch('http://localhost:8080/deck/generate-scenario', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.REACT_APP_API_KEY },
-              body: JSON.stringify({ hand, rangeData: data.rangeData, villainAction: chosenVillainAction })
+              body: JSON.stringify({ ...hand, rangeData: data.rangeData })
             })
               .then(response => response.json())
-              .then(expected => setExpectedAction(expected.expectedAction));
+            .then(expected => {
+              setExpectedAction(expected.expectedAction);
+              setVillainAction(expected.villainAction);
+            });
           });
       });
-  }, []);
+  }, [villainAction]);
 
   const handleAction = (chosenAction) => {
     if (chosenAction === expectedAction) {
@@ -66,16 +62,12 @@ export default function TrainingStarted() {
   };
 
   const resetRound = () => {
-    fetch(`http://localhost:8080/preflop-tables/random?level=${selectedLevel}`, {
+    fetch(`http://localhost:8080/preflop-table/random?level=${selectedLevel}`, {
       headers: { 'x-api-key': process.env.REACT_APP_API_KEY }
     })
       .then(response => response.json())
       .then(data => {
         setPreflopTable(data);
-        const chosenVillainAction = data.villainGoesFirst ? 
-          VILLAIN_ACTIONS_FIRST[Math.floor(Math.random() * VILLAIN_ACTIONS_FIRST.length)] : 
-          VILLAIN_ACTIONS_SECOND[Math.floor(Math.random() * VILLAIN_ACTIONS_SECOND.length)];
-        setVillainAction(chosenVillainAction);
 
         fetch('http://localhost:8080/deck/deal-hand', {
           headers: { 'x-api-key': process.env.REACT_APP_API_KEY }
@@ -83,13 +75,16 @@ export default function TrainingStarted() {
           .then(response => response.json())
           .then(hand => {
             setHeroHand(hand);
-            fetch('http://localhost:8080/expected-action', {
+            fetch('http://localhost:8080/deck/generate-scenario', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.REACT_APP_API_KEY },
-              body: JSON.stringify({ hand, rangeData: data.rangeData, villainAction: chosenVillainAction })
+              body: JSON.stringify({ ...hand, rangeData: data.rangeData })
             })
               .then(response => response.json())
-              .then(expected => setExpectedAction(expected.expectedAction));
+              .then(expected => {
+                setExpectedAction(expected.expectedAction);
+                setVillainAction(expected.villainAction);
+              });
           });
       });
   };
@@ -115,7 +110,7 @@ export default function TrainingStarted() {
       )}
       <h2 className="text-lg font-semibold mt-4">Choose Your Action:</h2>
       <div className="flex gap-2 mt-2">
-        {preflopTable?.villainGoesFirst
+        {villainAction !== 'NONE' 
           ? ACTIONS.map(action => (
               <button key={action} className="bg-blue-500 text-white px-4 py-2 rounded" onClick={() => handleAction(action)}>
                 {action}

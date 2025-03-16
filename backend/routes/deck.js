@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../config/db');
 const router = express.Router();
+const range_to_array = require('../services/range_to_array')
 
 // Function to generate a shuffled deck
 const generateDeck = () => {
@@ -30,36 +31,15 @@ const convertToPokerNotation = (hand) => {
 
 // Function to check if hand falls into a range with + notation
 const isHandInRange = (handNotation, rangeData) => {
-    if (rangeData[handNotation]) {
-        return rangeData[handNotation]; // Exact match first
-    }
-
-    for (let key in rangeData) {
-        if (key.includes("+")) {
-            let baseHand = key.replace("+", ""); // Remove the "+"
-            let baseRank = baseHand.substring(1, baseHand.length - 1); // Extract rank (e.g., "T" from "ATs")
-            let isSuited = baseHand.endsWith("s");
-            let isOffsuit = baseHand.endsWith("o");
-
-            const rankOrder = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
-            let baseIndex = rankOrder.indexOf(baseRank); // Find index of the base rank
-
-            let handRank = handNotation.substring(1, handNotation.length - 1); // Extract rank from `handNotation`
-            let handIndex = rankOrder.indexOf(handRank);
-
-            // ✅ Ensure only same or stronger hands are included
-            if (
-                handNotation.startsWith(baseHand[0]) && // Same high card (e.g., "A")
-                ((isOffsuit && handNotation.endsWith("o")) || (isSuited && handNotation.endsWith("s"))) && // Same suit type
-                handIndex >= baseIndex // MUST BE EQUAL OR STRONGER
-            ) {
-                return rangeData[key]; // Return matched range action
-            }
+    for (let entry of rangeData.data) {
+        const handArray = range_to_array(entry.range); // Convert range string to array
+        if (handArray.includes(handNotation)) {
+            return entry.actions; // Return the associated actions if hand matches
         }
     }
-
-    return ["FOLD", "FOLD", "FOLD"]; // Default action
+    return ["FOLD", "FOLD", "FOLD"]; // Default action if no match found
 };
+
 
 
 
@@ -96,6 +76,50 @@ router.post('/compare-hand/:tableId', async (req, res) => {
         const assignedActions = isHandInRange(handNotation, preflopTable.rangeData);
 
         res.json({ hand: handNotation, actions: assignedActions });
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error", details: error.message });
+    }
+});
+
+router.post('/generate-scenario', async (req, res) => {
+    const { hand, rangeData} = req.body;
+
+    if (!hand || !rangeData ) {
+        return res.status(400).json({ error: "Missing required parameters" });
+    }
+    // ✅ Validate hand format
+    if (!Array.isArray(hand) || hand.length !== 2 || !hand[0].rank || !hand[1].rank) {
+        return res.status(400).json({ error: "Invalid hand format. Expected an array of two card objects.",hand });
+    }
+
+    if (!rangeData || !rangeData.data) {
+        return res.status(400).json({ error: "Invalid rangeData format." });
+    }
+
+    try {
+        // Convert hand to poker notation
+        const handNotation = convertToPokerNotation(hand);
+        // Determine possible actions
+        const possibleActions = isHandInRange(handNotation, rangeData);
+
+        if (!possibleActions) {
+            return res.status(404).json({ error: "Hand not found in range data" });
+        }
+
+        const expectedAction = possibleActions[Math.floor(Math.random() * possibleActions.length)];
+        let villainAction;
+
+        if (expectedAction === possibleActions[0]) {
+            villainAction = "NONE";
+        } else if (expectedAction === possibleActions[1]) {
+            villainAction = "BET";
+        } else if (expectedAction === possibleActions[2]) {
+            villainAction = "ALL_IN";
+        } else {
+            return res.status(400).json({ error: "Invalid villain action" });
+        }
+
+        res.json({ expectedAction , villainAction});
     } catch (error) {
         res.status(500).json({ error: "Internal Server Error", details: error.message });
     }

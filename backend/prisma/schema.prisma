@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Position {
+  BTN
+  SB
+  BB
+}
+
+enum Level {
+  BASIC
+  PRO
+  ELITE
+}
+
+enum Action {
+  NONE
+  CALL
+  BET
+  ALL_IN
+  FOLD
+}
+
+model User {
+  id          Int     @id @default(autoincrement())
+  username    String  @unique
+  email       String  @unique
+  passwordHash String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PreflopTable {
+  id                     Int     @id @default(autoincrement())
+  heroPosition           Position
+  villainPosition        Position
+  stack                  Int @default(25)
+  level                  Level
+  variation              String
+  villainGoesFirst       Boolean @default(false)
+  rangeData              Json
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}

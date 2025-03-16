@@ -2,7 +2,6 @@ const express = require('express');
 const prisma = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const authenticateToken = require('../middleware/auth');
 const router = express.Router();
 
 // Register a new user
@@ -37,7 +36,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Get all users (protected)
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const users = await prisma.user.findMany({
             select: { id: true, username: true, email: true, createdAt: true }

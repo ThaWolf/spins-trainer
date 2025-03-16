@@ -6,7 +6,6 @@ import TrainingPage from './pages/TrainingPage';
 import TrainingStarted from './pages/TrainingStarted';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />   {/* Default page */}
@@ -14,5 +13,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/training-started" element={<TrainingStarted />} />
       </Routes>
     </Router>
-  </React.StrictMode>
 );

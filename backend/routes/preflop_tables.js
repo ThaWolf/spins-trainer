@@ -1,14 +1,13 @@
 const express = require('express');
 const prisma = require('../config/db');
-const authenticateToken = require('../middleware/auth');
 const router = express.Router();
 
 // Create a new preflop table
-router.post('/', authenticateToken, async (req, res) => {
-    const { heroPosition, villainPosition, level, variation, rangeData } = req.body;
+router.post('/', async (req, res) => {
+    const { heroPosition, villainPosition, level, variation, possibleVillainActions, rangeData } = req.body;
     try {
         const preflopTable = await prisma.preflopTable.create({
-            data: { heroPosition, villainPosition, level, variation, rangeData }
+            data: { heroPosition, villainPosition, level, variation, possibleVillainActions, rangeData }
         });
         res.status(201).json(preflopTable);
     } catch (error) {
@@ -17,7 +16,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Get all preflop tables
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const preflopTables = await prisma.preflopTable.findMany();
         res.json(preflopTables);
@@ -26,9 +25,35 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
+router.get('/random', async (req, res) => {
+    let { level } = req.query;
+    
+    if (!level) {
+        return res.status(400).json({ error: "Level is required" });
+    }
+
+    level = level.trim();
+
+    try {
+        const tables = await prisma.preflopTable.findMany({
+            where: { level }
+        });
+
+        if (tables.length === 0) {
+            return res.status(404).json({ error: "No preflop tables found for the given level" });
+        }
+
+        const randomTable = tables[Math.floor(Math.random() * tables.length)];
+        res.json(randomTable);
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error", details: error.message });
+    }
+});
+
 // Get a single preflop table by ID
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     const { id } = req.params;
+    console.log('entre aca y este es mi ID', parseInt(id))
     try {
         const preflopTable = await prisma.preflopTable.findUnique({ where: { id: parseInt(id) } });
         if (!preflopTable) return res.status(404).json({ error: 'Preflop table not found' });
@@ -39,7 +64,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Delete a preflop table
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
         await prisma.preflopTable.delete({ where: { id: parseInt(id) } });
