@@ -3,27 +3,33 @@ version: '3.8'
 services:
   spins_trainer:
     container_name: spins_trainer
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
     env_file:
-      - .env.production
+      - .env.development
     depends_on:
-      - postgres_db
+      postgres_db:
+        condition: service_healthy
     restart: always
 
   postgres_db:
     image: postgres:14
     container_name: postgres_spins_trainer
     restart: always
-    environment:
-      POSTGRES_USER: spins_admin
-      POSTGRES_PASSWORD: strongpassword
-      POSTGRES_DB: spins_trainer_db
+    env_file:
+      - .env.production
     ports:
-      - "5434:5434"
+      - "5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:
