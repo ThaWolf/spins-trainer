@@ -26,25 +26,23 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/random', async (req, res) => {
-    let { level } = req.query;
+    const { level } = req.query;
     
     if (!level) {
         return res.status(400).json({ error: "Level is required" });
     }
 
-    level = level.trim();
-
     try {
         const tables = await prisma.preflopTable.findMany({
-            where: { level }
+            where: { level },
         });
 
         if (tables.length === 0) {
             return res.status(404).json({ error: "No preflop tables found for the given level" });
         }
 
-        const randomTable = tables[Math.floor(Math.random() * tables.length)];
-        res.json(randomTable);
+        const preflopTable = tables[Math.floor(Math.random() * tables.length)];
+        res.json({ preflopTable });
     } catch (error) {
         res.status(500).json({ error: "Internal Server Error", details: error.message });
     }

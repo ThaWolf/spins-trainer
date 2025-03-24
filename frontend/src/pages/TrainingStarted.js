@@ -22,34 +22,20 @@ export default function TrainingStarted() {
     if (storedLevel) setSelectedLevel(storedLevel);
 
     // Fetch preflop table
-    fetch(`http://localhost:8080/preflop-table/random?level=${storedLevel}`, {
-      headers: { 'x-api-key': process.env.REACT_APP_API_KEY }
+    fetch(`http://localhost:8080/deck/generate-scenario?level=${storedLevel}`, {
+      method: "POST",
+      headers: {  'Content-Type': 'application/json',
+        'x-api-key': process.env.REACT_APP_API_KEY }
     })
       .then(response => response.json())
       .then(data => {
-        setPreflopTable(data);
-
-        // Fetch hero hand
-        fetch('http://localhost:8080/deck/deal-hand', {
-          headers: { 'x-api-key': process.env.REACT_APP_API_KEY }
-        })
-          .then(response => response.json())
-          .then(hand => {
-            setHeroHand(hand);
-            // Fetch expected action
-            fetch('http://localhost:8080/deck/generate-scenario', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.REACT_APP_API_KEY },
-              body: JSON.stringify({ ...hand, rangeData: data.rangeData })
-            })
-              .then(response => response.json())
-            .then(expected => {
-              setExpectedAction(expected.expectedAction);
-              setVillainAction(expected.villainAction);
-            });
-          });
+        setPreflopTable(data.preflopTable);
+        setHeroHand(data.hand);
+        setVillainAction(data.expectedActions.villain);
+        setExpectedAction(data.expectedActions.hero)
+        console.log(data.hand)
       });
-  }, [villainAction]);
+  }, []);
 
   const handleAction = (chosenAction) => {
     if (chosenAction === expectedAction) {
@@ -62,67 +48,61 @@ export default function TrainingStarted() {
   };
 
   const resetRound = () => {
-    fetch(`http://localhost:8080/preflop-table/random?level=${selectedLevel}`, {
-      headers: { 'x-api-key': process.env.REACT_APP_API_KEY }
-    })
-      .then(response => response.json())
-      .then(data => {
-        setPreflopTable(data);
-
-        fetch('http://localhost:8080/deck/deal-hand', {
-          headers: { 'x-api-key': process.env.REACT_APP_API_KEY }
-        })
-          .then(response => response.json())
-          .then(hand => {
-            setHeroHand(hand);
-            fetch('http://localhost:8080/deck/generate-scenario', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.REACT_APP_API_KEY },
-              body: JSON.stringify({ ...hand, rangeData: data.rangeData })
-            })
-              .then(response => response.json())
-              .then(expected => {
-                setExpectedAction(expected.expectedAction);
-                setVillainAction(expected.villainAction);
-              });
-          });
-      });
+    fetch(`http://localhost:8080/deck/generate-scenario?level=${selectedLevel}`, {
+      method: "POST",
+    headers: {'Content-Type': 'application/json', 'x-api-key': process.env.REACT_APP_API_KEY }
+  })
+    .then(response => response.json())
+    .then(data => {
+      setPreflopTable(data.preflopTable);
+      setHeroHand(data.hand);
+      setVillainAction(data.expectedActions.villain);
+      setExpectedAction(data.expectedActions.hero)
+      console.log(data.hand)
+    });
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">Training Started!</h1>
-      <h2 className="text-lg font-semibold">User: {username}</h2>
-      <h2 className="text-lg font-semibold">Level: {selectedLevel}</h2>
-      <h2 className="text-lg font-semibold">Score: {score} | Fish: {fish}</h2>
-      {heroHand && (
-        <h2 className="text-lg font-semibold">Hero Hand: {heroHand.hand[0].rank}{heroHand.hand[0].suit}, {heroHand.hand[1].rank}{heroHand.hand[1].suit}</h2>
-      )}
-      {preflopTable && (
-        <>
-          <h2 className="text-lg font-semibold">Hero Position: {preflopTable.heroPosition}</h2>
-          <h2 className="text-lg font-semibold">Villain Position: {preflopTable.villainPosition}</h2>
-          <h2 className="text-lg font-semibold">Stack: {preflopTable.stack}</h2>
-          {villainAction !== "NONE" && (
-            <h2 className="text-lg font-semibold">Villain Action: {villainAction}</h2>
-          )}
-        </>
-      )}
-      <h2 className="text-lg font-semibold mt-4">Choose Your Action:</h2>
-      <div className="flex gap-2 mt-2">
-        {villainAction !== 'NONE' 
-          ? ACTIONS.map(action => (
-              <button key={action} className="bg-blue-500 text-white px-4 py-2 rounded" onClick={() => handleAction(action)}>
-                {action}
-              </button>
-            ))
-          : ACTIONS.filter(action => action !== "CALL").map(action => (
-              <button key={action} className="bg-blue-500 text-white px-4 py-2 rounded" onClick={() => handleAction(action)}>
-                {action}
-              </button>
+    <div className="flex items-center justify-center h-screen bg-cover bg-center bg-poker">
+      <div className="bg-black bg-opacity-80 p-8 rounded-lg shadow-lg w-[30rem] text-white backdrop-blur-md text-center">
+        <h1 className="text-3xl font-bold mb-4">Training Session</h1>
+        <h2 className="text-lg font-semibold">User: {username}</h2>
+        <h2 className="text-lg font-semibold">Level: {selectedLevel}</h2>
+        <h2 className="text-lg font-semibold">Score: {score} | Fish: {fish}</h2>
+        {heroHand && (
+          <div className="flex justify-center gap-4 my-4">
+            {heroHand.map((card, index) => (
+               <div key={index} className="w-16 h-24 bg-contain bg-no-repeat bg-center" style={{ backgroundImage: `url('/images/cards/${card.rank.toLowerCase()}${card.suit.charAt(0).toLowerCase()}.png')` }}>
+              </div>
             ))}
+          </div>
+        )}
+        {preflopTable && (
+          <>
+            <h2 className="text-lg font-semibold">Hero Position: {preflopTable.heroPosition}</h2>
+            <h2 className="text-lg font-semibold">Villain Position: {preflopTable.villainPosition}</h2>
+            <h2 className="text-lg font-semibold">Stack: {preflopTable.stack}</h2>
+            {villainAction !== "NONE" && (
+              <h2 className="text-lg font-semibold">Villain Action: {villainAction}</h2>
+            )}
+          </>
+        )}
+        <h2 className="text-lg font-semibold mt-4">Choose Your Action:</h2>
+        <div className="flex gap-2 mt-2 justify-center">
+          {villainAction !== 'NONE'
+            ? ACTIONS.map(action => (
+                <button key={action} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-all" onClick={() => handleAction(action)}>
+                  {action}
+                </button>
+              ))
+            : ACTIONS.filter(action => action !== "CALL").map(action => (
+                <button key={action} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-all" onClick={() => handleAction(action)}>
+                  {action}
+                </button>
+              ))}
+        </div>
+        <button className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-all" onClick={() => navigate('/')}>Go Home</button>
       </div>
-      <button className="mt-4 bg-red-500 text-white px-4 py-2 rounded" onClick={() => navigate('/')}>Go Home</button>
     </div>
   );
 }

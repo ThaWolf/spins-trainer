@@ -37,29 +37,31 @@ export default function TrainingPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">Welcome, {username}!</h1>
-      <h2 className="text-lg font-semibold mb-2">Choose your level</h2>
-      {levels.length > 0 ? (
-        <select 
-          value={selectedLevel} 
-          onChange={(e) => setSelectedLevel(e.target.value)}
-          className="p-2 border border-gray-300 rounded mb-4"
+    <div className="flex items-center justify-center h-screen bg-cover bg-center bg-poker">
+      <div className="bg-black bg-opacity-80 p-8 rounded-lg shadow-lg w-96 text-white backdrop-blur-md">
+        <h1 className="text-3xl font-bold mb-4 text-center">Welcome, {username}!</h1>
+        <h2 className="text-lg font-semibold mb-2 text-center">Choose your level</h2>
+        {levels.length > 0 ? (
+          <select 
+            value={selectedLevel} 
+            onChange={(e) => setSelectedLevel(e.target.value)}
+            className="w-full p-3 mb-3 border border-gray-600 rounded bg-gray-900 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-400"
+          >
+            {levels.map((level) => (
+              <option key={level} value={level}>{level}</option>
+            ))}
+          </select>
+        ) : (
+          <p className="text-center">Loading levels...</p>
+        )}
+        <button 
+          onClick={handleStartTraining} 
+          className="w-full bg-green-500 text-white p-3 rounded hover:bg-green-600 transition-all duration-300 shadow-lg"
+          disabled={levels.length === 0}
         >
-          {levels.map((level) => (
-            <option key={level} value={level}>{level}</option>
-          ))}
-        </select>
-      ) : (
-        <p>Loading levels...</p>
-      )}
-      <button 
-        onClick={handleStartTraining} 
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        disabled={levels.length === 0}
-      >
-        Start Training
-      </button>
+          Start Training
+        </button>
+      </div>
     </div>
   );
 }

@@ -18,6 +18,12 @@ const generateDeck = () => {
     return deck.sort(() => Math.random() - 0.5);
 };
 
+const dealHand = () => {
+    const deck = generateDeck();
+    const hand = deck.slice(0, 2);
+    return hand;
+}
+
 // Function to convert hand to poker notation
 const convertToPokerNotation = (hand) => {
     const rankOrder = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
@@ -37,9 +43,24 @@ const isHandInRange = (handNotation, rangeData) => {
             return entry.actions; // Return the associated actions if hand matches
         }
     }
-    return ["FOLD", "FOLD", "FOLD"]; // Default action if no match found
+    return [{"villain": 'NONE', "hero":"FOLD"},{"villain": 'NONE', "hero":"FOLD"},{"villain": 'NONE', "hero":"FOLD"}]; // Default actions if no match found
 };
 
+
+
+router.get('/ranges-as-arrays/:tableId', async (req,res)=>{
+    const { tableId } = req.params;
+
+    const preflopTable = await prisma.preflopTable.findUnique({
+        where: { id: parseInt(tableId) },
+        select: { rangeData: true }
+    });
+
+    const  results = preflopTable.rangeData.data.map(entry => range_to_array(entry.range));
+
+    res.json(results)
+
+})
 
 
 
@@ -47,9 +68,7 @@ const isHandInRange = (handNotation, rangeData) => {
 
 // Endpoint to deal 2 random cards
 router.get('/deal-hand', (req, res) => {
-    const deck = generateDeck();
-    const hand = deck.slice(0, 2);
-    res.json({ hand });
+    dealHand();
 });
 
 // Endpoint to compare hand with a given Preflop Table range
@@ -82,44 +101,37 @@ router.post('/compare-hand/:tableId', async (req, res) => {
 });
 
 router.post('/generate-scenario', async (req, res) => {
-    const { hand, rangeData} = req.body;
+    const { level } = req.query;
 
-    if (!hand || !rangeData ) {
-        return res.status(400).json({ error: "Missing required parameters" });
-    }
-    // ✅ Validate hand format
-    if (!Array.isArray(hand) || hand.length !== 2 || !hand[0].rank || !hand[1].rank) {
-        return res.status(400).json({ error: "Invalid hand format. Expected an array of two card objects.",hand });
-    }
-
-    if (!rangeData || !rangeData.data) {
-        return res.status(400).json({ error: "Invalid rangeData format." });
+    if (!level) {
+        return res.status(400).json({ error: "Level is required" });
     }
 
     try {
+        //Find random preflop table for the given level
+        const tables = await prisma.preflopTable.findMany({
+            where: { level },
+        });
+
+        if (tables.length === 0) {
+            return res.status(404).json({ error: "No preflop tables found for the given level" });
+        }
+
+        const preflopTable = tables[Math.floor(Math.random() * tables.length)];
+
+        //Deal Hand
+        const hand = dealHand();
+
         // Convert hand to poker notation
         const handNotation = convertToPokerNotation(hand);
+
         // Determine possible actions
-        const possibleActions = isHandInRange(handNotation, rangeData);
+        const possibleActions = isHandInRange(handNotation, preflopTable.rangeData);
 
-        if (!possibleActions) {
-            return res.status(404).json({ error: "Hand not found in range data" });
-        }
-
-        const expectedAction = possibleActions[Math.floor(Math.random() * possibleActions.length)];
-        let villainAction;
-
-        if (expectedAction === possibleActions[0]) {
-            villainAction = "NONE";
-        } else if (expectedAction === possibleActions[1]) {
-            villainAction = "BET";
-        } else if (expectedAction === possibleActions[2]) {
-            villainAction = "ALL_IN";
-        } else {
-            return res.status(400).json({ error: "Invalid villain action" });
-        }
-
-        res.json({ expectedAction , villainAction});
+        //Determine an expected action
+        const expectedActions = possibleActions[Math.floor(Math.random() * possibleActions.length)];
+        
+        res.json({ hand, preflopTable, expectedActions });
     } catch (error) {
         res.status(500).json({ error: "Internal Server Error", details: error.message });
     }

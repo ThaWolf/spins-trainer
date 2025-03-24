@@ -43,7 +43,6 @@ model PreflopTable {
   stack                  Int @default(25)
   level                  Level
   variation              String
-  villainGoesFirst       Boolean @default(false)
   rangeData              Json
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
