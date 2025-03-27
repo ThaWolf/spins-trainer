@@ -6,6 +6,7 @@ export default function TrainingPage() {
   const [levels, setLevels] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState('');
   const navigate = useNavigate();
+  const API_BASE_URL = process.env.REACT_APP_API_URL
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
@@ -14,7 +15,7 @@ export default function TrainingPage() {
     }
     
     // Fetch levels from backend with API Key
-    fetch('http://localhost:8080/enums/levels', {
+    fetch(`${API_BASE_URL}/enums/levels`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

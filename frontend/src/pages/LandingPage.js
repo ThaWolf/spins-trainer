@@ -7,11 +7,12 @@ export default function LandingPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const API_BASE_URL = process.env.REACT_APP_API_URL
 
   const handleLogin = async () => {
     setError(null);
     try {
-      const response = await fetch('http://localhost:8080/users/login', {
+      const response = await fetch(`${API_BASE_URL}/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

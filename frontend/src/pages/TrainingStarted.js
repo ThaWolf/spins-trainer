@@ -13,6 +13,7 @@ export default function TrainingStarted() {
   const [score, setScore] = useState(0);
   const [fish, setFish] = useState(0);
   const navigate = useNavigate();
+  const API_BASE_URL = process.env.REACT_APP_API_URL
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
@@ -22,7 +23,7 @@ export default function TrainingStarted() {
     if (storedLevel) setSelectedLevel(storedLevel);
 
     // Fetch preflop table
-    fetch(`http://localhost:8080/deck/generate-scenario?level=${storedLevel}`, {
+    fetch(`${API_BASE_URL}deck/generate-scenario?level=${storedLevel}`, {
       method: "POST",
       headers: {  'Content-Type': 'application/json',
         'x-api-key': process.env.REACT_APP_API_KEY }
@@ -48,7 +49,7 @@ export default function TrainingStarted() {
   };
 
   const resetRound = () => {
-    fetch(`http://localhost:8080/deck/generate-scenario?level=${selectedLevel}`, {
+    fetch(`${API_BASE_URL}/deck/generate-scenario?level=${selectedLevel}`, {
       method: "POST",
     headers: {'Content-Type': 'application/json', 'x-api-key': process.env.REACT_APP_API_KEY }
   })
