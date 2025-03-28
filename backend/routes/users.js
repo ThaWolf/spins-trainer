@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Register a new user
 router.post('/register', async (req, res) => {
+    console.log("Register endpoint hit with data:", req.body);
     const { username, email, password } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
