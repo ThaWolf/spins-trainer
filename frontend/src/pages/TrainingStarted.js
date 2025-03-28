@@ -23,7 +23,7 @@ export default function TrainingStarted() {
     if (storedLevel) setSelectedLevel(storedLevel);
 
     // Fetch preflop table
-    fetch(`${API_BASE_URL}deck/generate-scenario?level=${storedLevel}`, {
+    fetch(`${API_BASE_URL}/deck/generate-scenario?level=${storedLevel}`, {
       method: "POST",
       headers: {  'Content-Type': 'application/json',
         'x-api-key': process.env.REACT_APP_API_KEY }
